@@ -1,7 +1,10 @@
 package main
 
-// OpType : OpType of each instructions required
-type OpType int
+// OpName : enum for each instruction required
+type OpName int
+
+// InstrType : enum for each instruction type
+type InstrType int
 
 // Define Opcode for all instructions
 const (
@@ -16,10 +19,10 @@ const (
 	RTypeOpcode  = "0110011"
 )
 
-// Create enum OpType for each operation
+// Create enum for each operation
 const (
 	// U-Type Instruction
-	LUI OpType = iota
+	LUI OpName = iota
 	AUIPC
 	// J-Type Instruction
 	JAL
@@ -63,23 +66,36 @@ const (
 	AND
 )
 
+// Instruction type
+const (
+	UType InstrType = iota
+	JType
+	IType
+	BType
+	SType
+	RType
+)
+
 // UTypeInstr : Store the decoded parts of U Type instruction
 type UTypeInstr struct {
-	instrType OpType
+	opName    OpName
+	instrType InstrType
 	imm       int
 	rd        int
 }
 
 // JTypeInstr : Store the decoded parts of J Type instruction
 type JTypeInstr struct {
-	instrType OpType
+	opName    OpName
+	instrType InstrType
 	imm       int
 	rd        int
 }
 
 // BTypeInstr : Store the decoded parts of B Type instruction
 type BTypeInstr struct {
-	instrType OpType
+	opName    OpName
+	instrType InstrType
 	imm1      int
 	imm2      int
 	r1        int
@@ -88,7 +104,8 @@ type BTypeInstr struct {
 
 // STypeInstr : Store the decoded parts of S Type instruction
 type STypeInstr struct {
-	instrType OpType
+	opName    OpName
+	instrType InstrType
 	imm1      int
 	imm2      int
 	r1        int
@@ -97,7 +114,8 @@ type STypeInstr struct {
 
 // ITypeInstr : Store the decoded parts of I Type instruction
 type ITypeInstr struct {
-	instrType OpType
+	opName    OpName
+	instrType InstrType
 	imm1      int
 	rs1       int
 	rd        int
@@ -105,11 +123,13 @@ type ITypeInstr struct {
 
 // RTypeInstr : Store the decoded parts of R Type instruction
 type RTypeInstr struct {
-	instType OpType
+	opName    OpName
+	instrType InstrType
 	r1       int
 	r2       int
 	rd       int
 }
 
 // DecodedInstr : Interface for all structs of decoded instructions
-type DecodedInstr interface{}
+type DecodedInstr interface {
+}

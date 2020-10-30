@@ -2,10 +2,9 @@ package main
 
 import (
 	"math"
-	"strconv"
 )
 
-// Decoder : object for decoding the instructions
+// Decoder : Simulator for Decode Stage in CPU
 type Decoder struct {
 }
 
@@ -18,16 +17,16 @@ func (d Decoder) Decode(binaryInstr []byte) DecodedInstr {
 	switch opcode {
 	case LUIOpcode:
 		// LUI
-		return UTypeInstr{LUI, biToInt(instr[12:32]), biToInt(instr[8:12])}
+		return UTypeInstr{LUI, UType, biToInt(instr[12:32]), biToInt(instr[8:12])}
 	case AUIPCOpcode:
 		// AUIPC
-		return UTypeInstr{AUIPC, biToInt(instr[12:32]), biToInt(instr[8:12])}
+		return UTypeInstr{AUIPC, UType, biToInt(instr[12:32]), biToInt(instr[8:12])}
 	case JALOpcode:
 		// JAL
-		return JTypeInstr{JAL, biToInt(instr[12:32]), biToInt(instr[8:12])}
+		return JTypeInstr{JAL, JType, biToInt(instr[12:32]), biToInt(instr[8:12])}
 	case JALROpcode:
 		// JALR
-		return ITypeInstr{JALR, biToInt(instr[20:32]), biToInt(instr[15:20]), biToInt(instr[7:12])}
+		return ITypeInstr{JALR, IType, biToInt(instr[20:32]), biToInt(instr[15:20]), biToInt(instr[7:12])}
 	case BTypeOpcode:
 		// B-Type Instruction
 		return selectFromBTypeInstruction(instr)
@@ -52,6 +51,7 @@ func selectFromBTypeInstruction(instr string) DecodedInstr {
 	funct3 := instr[7:12]
 	bInstr := BTypeInstr{
 		-1,
+		BType,
 		biToInt(instr[25:32]),
 		biToInt(instr[7:12]),
 		biToInt(instr[15:20]),
@@ -60,29 +60,29 @@ func selectFromBTypeInstruction(instr string) DecodedInstr {
 
 	switch funct3 {
 	case "000":
-		bInstr.instrType = BEQ
+		bInstr.opName = BEQ
 		break
 	case "001":
-		bInstr.instrType = BNE
+		bInstr.opName = BNE
 		break
 	case "100":
-		bInstr.instrType = BLT
+		bInstr.opName = BLT
 		break
 	case "101":
-		bInstr.instrType = BGE
+		bInstr.opName = BGE
 		break
 	case "110":
-		bInstr.instrType = BLTU
+		bInstr.opName = BLTU
 		break
 	case "111":
-		bInstr.instrType = BGEU
+		bInstr.opName = BGEU
 		break
 	}
 	return bInstr
 }
 
 func selectFromITypeInstruction(instr string) DecodedInstr {
-	iInstr := ITypeInstr{-1, biToInt(instr[20:32]), biToInt(instr[15:20]), biToInt(instr[7:12])}
+	iInstr := ITypeInstr{-1, IType, biToInt(instr[20:32]), biToInt(instr[15:20]), biToInt(instr[7:12])}
 	funct3 := instr[12:15]
 
 	opCode := instr[0:8]
@@ -90,53 +90,53 @@ func selectFromITypeInstruction(instr string) DecodedInstr {
 	if opCode == IType1Opcode {
 		switch funct3 {
 		case "000":
-			iInstr.instrType = LB
+			iInstr.opName = LB
 			break
 		case "001":
-			iInstr.instrType = LH
+			iInstr.opName = LH
 			break
 		case "010":
-			iInstr.instrType = LW
+			iInstr.opName = LW
 			break
 		case "100":
-			iInstr.instrType = LBU
+			iInstr.opName = LBU
 			break
 		case "101":
-			iInstr.instrType = LHU
+			iInstr.opName = LHU
 			break
 		}
 	} else {
 		switch funct3 {
 		// TODO: multiple
 		case "000":
-			iInstr.instrType = ADDI
+			iInstr.opName = ADDI
 			break
 		case "001":
-			iInstr.instrType = SLLI
+			iInstr.opName = SLLI
 			iInstr.imm1 = -1
 			break
 		case "010":
-			iInstr.instrType = SLTI
+			iInstr.opName = SLTI
 			break
 		case "011":
-			iInstr.instrType = SLTIU
+			iInstr.opName = SLTIU
 			break
 		case "100":
-			iInstr.instrType = XORI
+			iInstr.opName = XORI
 			break
 		case "101":
 			if instr[25:32] == "0000000" {
-				iInstr.instrType = SRLI
+				iInstr.opName = SRLI
 			} else {
-				iInstr.instrType = SRAI
+				iInstr.opName = SRAI
 			}
 			iInstr.imm1 = -1
 			break
 		case "110":
-			iInstr.instrType = ORI
+			iInstr.opName = ORI
 			break
 		case "111":
-			iInstr.instrType = ANDI
+			iInstr.opName = ANDI
 			break
 		}
 	}
@@ -147,6 +147,7 @@ func selectFromITypeInstruction(instr string) DecodedInstr {
 func selectFromSTypeInstruction(instr string) DecodedInstr {
 	sInstr := STypeInstr{
 		-1,
+		SType,
 		biToInt(instr[5:32]),
 		biToInt(instr[7:12]),
 		biToInt(instr[15:20]),
@@ -157,13 +158,13 @@ func selectFromSTypeInstruction(instr string) DecodedInstr {
 
 	switch func3 {
 	case "000":
-		sInstr.instrType = SB
+		sInstr.opName = SB
 		break
 	case "001":
-		sInstr.instrType = SH
+		sInstr.opName = SH
 		break
 	case "010":
-		sInstr.instrType = SW
+		sInstr.opName = SW
 		break
 	}
 	return sInstr
@@ -172,6 +173,7 @@ func selectFromSTypeInstruction(instr string) DecodedInstr {
 func selectFromRTypeInstruction(instr string) DecodedInstr {
 	rInstr := RTypeInstr{
 		-1,
+		RType,
 		biToInt(instr[15:20]),
 		biToInt(instr[20:25]),
 		biToInt(instr[7:12]),
@@ -182,35 +184,35 @@ func selectFromRTypeInstruction(instr string) DecodedInstr {
 	switch func3 {
 	case "000":
 		if instr[30] == '0' {
-			rInstr.instType = ADD
+			rInstr.opName = ADD
 		} else {
-			rInstr.instType = SUB
+			rInstr.opName = SUB
 		}
 		break
 	case "001":
-		rInstr.instType = SLL
+		rInstr.opName = SLL
 		break
 	case "010":
-		rInstr.instType = SLT
+		rInstr.opName = SLT
 		break
 	case "011":
-		rInstr.instType = SLTU
+		rInstr.opName = SLTU
 		break
 	case "100":
-		rInstr.instType = XOR
+		rInstr.opName = XOR
 		break
 	case "101":
 		if instr[30] == '0' {
-			rInstr.instType = SRL
+			rInstr.opName = SRL
 		} else {
-			rInstr.instType = SRA
+			rInstr.opName = SRA
 		}
 		break
 	case "110":
-		rInstr.instType = OR
+		rInstr.opName = OR
 		break
 	case "111":
-		rInstr.instType = AND
+		rInstr.opName = AND
 		break
 	}
 
@@ -234,6 +236,12 @@ func convertInstructionToBinaryString(binaryInstr []byte) string {
 }
 
 func biToInt(binaryStr string) int {
-	val, _ := strconv.ParseInt(binaryStr, 2, 8)
-	return int(val)
+	value := 0
+	for _, c := range binaryStr {
+		value *= 2
+		if c == '1' {
+			value++
+		}
+	}
+	return value
 }
